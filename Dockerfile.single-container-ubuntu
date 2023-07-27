@@ -1,0 +1,66 @@
+# Multi-stage build for single container deployment (Ubuntu-based)
+# Stage 1: Build the application
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+
+# Copy Maven wrapper and pom.xml first (for better caching)
+COPY pom.xml .
+COPY mvnw .
+COPY mvnw.cmd .
+COPY .mvn .mvn
+
+# Copy source code
+COPY src ./src
+
+# Build the application
+RUN ./mvnw clean package -DskipTests
+
+# Stage 2: Runtime container with MongoDB (Ubuntu-based)
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Java 17, MongoDB, and required dependencies
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    wget \
+    gnupg \
+    curl \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install MongoDB
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | apt-key add - \
+    && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list \
+    && apt-get update \
+    && apt-get install -y mongodb-org \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create MongoDB data and log directories
+RUN mkdir -p /data/db /var/log/mongodb /var/log/supervisor
+
+# Copy built JAR from build stage
+COPY --from=build /app/target/fitness-tracking-app-0.0.1-SNAPSHOT.jar /app/app.jar
+
+# Copy application configuration
+COPY src/main/resources/application.yaml /app/application.yaml
+
+# Update application.yaml to use localhost for MongoDB
+RUN sed -i 's/host: mongodb/host: localhost/g' /app/application.yaml
+
+# Copy supervisor configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy startup script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+WORKDIR /app
+
+# Expose ports
+EXPOSE 8080 27017
+
+# Use supervisor to manage processes
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf", "-n"]
