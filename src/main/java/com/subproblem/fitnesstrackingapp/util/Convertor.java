@@ -53,6 +53,9 @@ public class Convertor {
     }
 
     public ProductResponse productToResponseDto(Product product) {
+        String imageBase64 = product.getImage() != null && product.getImage().length > 0
+                ? Base64.getEncoder().encodeToString(product.getImage())
+                : "";
         return new ProductResponse(
                 product.getDescription(),
                 product.getName(),
@@ -61,7 +64,7 @@ public class Convertor {
                 product.getCarbs(),
                 product.getFat(),
                 product.getCode(),
-                Base64.getEncoder().encodeToString(product.getImage())
+                imageBase64
         );
     }
 

@@ -1,0 +1,306 @@
+{
+  "info": {
+    "name": "Fitness Tracking API",
+    "description": "Collection to test all endpoints of the Spring Boot Fitness Tracking Application. Uses JWT in HTTP-only cookie (name: subproblem). Run **Authenticate** first to set the cookie. With demo data (start app with -Dspring.profiles.active=demo), use **Authenticate (demo user)** or **Authenticate (demo admin)** for pre-seeded users; password for all: password123.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "weightEntryId", "value": "" },
+    { "key": "workoutId", "value": "" },
+    { "key": "productCode", "value": "1001" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstname\": \"Test\",\n  \"lastname\": \"User\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\",\n  \"dateOfBirth\": \"1990-01-15\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/register"
+          }
+        },
+        {
+          "name": "Authenticate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["// Cookie 'subproblem' is set automatically by Postman from Set-Cookie header."],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/authenticate"
+          }
+        },
+        {
+          "name": "Authenticate (demo user – Alice)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@demo.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/authenticate"
+          }
+        },
+        {
+          "name": "Authenticate (demo admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@demo.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/authenticate"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get current user",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/secured/user"
+          }
+        },
+        {
+          "name": "Update profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"heightCm\": 175.0,\n  \"targetWeightKg\": 70.0\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/secured/user/profile"
+          }
+        },
+        {
+          "name": "Get credentials",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/secured/user/credentials"
+          }
+        },
+        {
+          "name": "Get my products",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/secured/user/products"
+          }
+        },
+        {
+          "name": "Add product to user (by code)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/secured/user/products/{{productCode}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Weight",
+      "item": [
+        {
+          "name": "Add weight entry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 && pm.response.json().id) {",
+                  "    pm.collectionVariables.set('weightEntryId', pm.response.json().id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weightKg\": 72.5,\n  \"date\": \"2025-03-10\",\n  \"note\": \"Morning weigh-in\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/secured/user/weight"
+          }
+        },
+        {
+          "name": "Get weight entries",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/secured/user/weight",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "secured", "user", "weight"]
+            }
+          }
+        },
+        {
+          "name": "Get weight entries (with date range)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/secured/user/weight?from=2025-03-01&to=2025-03-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "secured", "user", "weight"],
+              "query": [
+                { "key": "from", "value": "2025-03-01" },
+                { "key": "to", "value": "2025-03-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get weight journey",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/secured/user/weight/journey"
+          }
+        },
+        {
+          "name": "Delete weight entry",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/secured/user/weight/{{weightEntryId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workout",
+      "item": [
+        {
+          "name": "Add workout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Add workout returns 201 with no body. Run 'Get current user (to get workout id)' next to set {{workoutId}}."
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"\",\n  \"workoutDate\": \"2025-03-10\",\n  \"exerciseType\": \"Running\",\n  \"performanceMetricsResponse\": {\n    \"duration\": 45.0,\n    \"caloriesBurned\": 350,\n    \"intensity\": 7\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/secured/user/workout"
+          }
+        },
+        {
+          "name": "Get current user (to get workout id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.workouts && json.workouts.length > 0 && json.workouts[0].id) {",
+                  "    pm.collectionVariables.set('workoutId', json.workouts[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/secured/user"
+          }
+        },
+        {
+          "name": "Delete workout",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/secured/user/workout/{{workoutId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get all users",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/secured/admin/users"
+          }
+        },
+        {
+          "name": "Create product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Protein bar\",\n  \"name\": \"Choco Bar\",\n  \"calories\": 200,\n  \"protein\": 15.0,\n  \"carbs\": 20.0,\n  \"fat\": 8.0,\n  \"code\": 1001\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/secured/admin/product"
+          }
+        },
+        {
+          "name": "Get all products",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/secured/admin/product"
+          }
+        },
+        {
+          "name": "Upload product image",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "image", "type": "file", "src": "" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v1/secured/admin/product/image/{{productCode}}"
+          }
+        },
+        {
+          "name": "Delete product",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/secured/admin/product/{{productCode}}"
+          }
+        }
+      ]
+    }
+  ]
+}
