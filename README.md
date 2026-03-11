@@ -29,7 +29,7 @@ The project is built using the following technologies:
 
 The application exposes the following RESTful API endpoints:
 
-<<<<<<< HEAD
+
 ### Authentication Endpoints
 - `POST /api/v1/auth/register` - Register a new user account.
 - `POST /api/v1/auth/authenticate` - User login to obtain JWT token (stored in HttpOnly cookie).
@@ -795,14 +795,14 @@ echo -e "\n\n=== Testing Complete ==="
    - Check logs: `docker logs fitness-app`
    - Run container interactively to see errors: `docker run -it --name fitness-app fitness-app`
    - Verify entrypoint script: `docker exec fitness-app cat /docker-entrypoint.sh`
-=======
+
 - `/api/v1/auth/register` - Register a new user account.
 - `/api/v1/auth/authenticatelogin` - User login to obtain JWT token.
 - `/api/v1/auth/logout` - CRUD operations for managing workouts.
 - `/api/v1/user/` - CRUD operations for users
 - `/api/v1/admin/users` - Admin-only endpoint for managing user accounts.
 - `/api/v1/admin/products` - Admin-only endpoint for managing products.
->>>>>>> c4932b6 (updating README.md)
+
 
 ## Deployment using Docker
 
